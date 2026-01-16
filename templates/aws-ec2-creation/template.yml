@@ -2,28 +2,28 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: create-aws-vm-rhaap
-  title: Provisionnement VM AWS via AAP
-  description: Création d'une instance EC2 avec sélection de taille (Small/Medium/Large/XLarge)
+  title: Provisionnement VM AWS (RHAAP)
+  description: Création d'une instance EC2 avec sélection de taille (Small à XLarge)
 spec:
   owner: platform-team
   type: service
 
   parameters:
-    - title: Étape 1 - Informations Générales
+    - title: Étape 1 - Identification
       required:
         - vm_name
       properties:
         vm_name:
           title: Nom de la VM
           type: string
-          description: Nom de l'instance qui sera créé sur AWS
+          description: Nom de l'instance sur AWS
         environment:
           title: Environnement
           type: string
           enum: [dev, staging, prod]
           default: dev
 
-    - title: Étape 2 - Configuration Technique
+    - title: Étape 2 - Configuration AAP
       required:
         - aws_vm_instance_type_labelsize
         - jobInventory
@@ -31,30 +31,25 @@ spec:
         aws_vm_instance_type_labelsize:
           title: Taille de l'instance
           type: string
-          description: Choisissez le gabarit de ressource
           enum: [small, medium, large, xlarge]
           default: small
         jobInventory:
-          title: Inventaire Cible
+          title: Inventaire
           type: string
-          description: Sélectionnez l'inventaire Ansible pour le déploiement
+          description: Sélectionnez l'inventaire dans AAP
           ui:field: AAPResourcePicker
-          resource: inventories
-        # On définit l'organisation en caché si elle est fixe
-        organization:
-          type: string
-          default: "Default" # À adapter selon votre org AAP
-          ui:field: hidden
+          ui:options:
+            resource: inventories
 
   steps:
     - id: launch-job
-      name: Lancement du déploiement AWS
+      name: Lancement du Job Ansible
       action: rhaap:launch-job-template
       input:
-        # Note: Assurez-vous que le token est disponible (souvent injecté via secrets)
-        token: ${{ secrets.AAP_TOKEN }} 
+        # Note: Vérifiez si votre token est dans parameters ou secrets
+        token: ${{ parameters.AAP_TOKEN }} 
         values:
-          # Nom exact de votre Job Template déjà existant dans AAP
+          # Remplacez par le nom exact de votre Job Template dans le Controller
           template: "AWS"
           inventory: ${{ parameters.jobInventory }}
           jobType: run
@@ -62,9 +57,8 @@ spec:
             aws_vm_name: ${{ parameters.vm_name }}
             aws_vm_instance_type_labelsize: ${{ parameters.aws_vm_instance_type_labelsize }}
             env_tag: ${{ parameters.environment }}
-            created_by: "backstage-portal"
 
   output:
     links:
-      - title: Voir le suivi du Job dans AAP
+      - title: Suivre l'exécution du Job
         url: ${{ steps['launch-job'].output.data.url }}
