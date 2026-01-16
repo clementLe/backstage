@@ -40,7 +40,7 @@ spec:
       # Attention : vérifiez que cette action est bien installée dans votre AAP
       action: ansible:controller:job:run
       input:
-        jobTemplateName: "AWS - EC2 Provisioning"
+        jobTemplateName: "AWS"
         extraVars:
           aws_vm_name: ${{ parameters.vm_name }}
           aws_vm_instance_type_labelsize: ${{ parameters.aws_vm_instance_type_labelsize }}
