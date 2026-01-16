@@ -1,0 +1,67 @@
+apiVersion: scaffold.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: create-aws-vm
+  title: Création de Machine Virtuelle AWS
+  description: Provisionner une instance EC2 via Ansible Automation Platform
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Étape 1 - Identification
+      required:
+        - vm_name
+        - environment
+      properties:
+        vm_name:
+          title: Nom de la VM
+          type: string
+          description: Nom unique pour l'instance EC2
+        environment:
+          title: Environnement
+          type: string
+          enum: [Développement, Staging, Production]
+          default: Développement
+
+    - title: Étape 2 - Configuration Technique
+      required:
+        - aws_vm_instance_type_labelsize
+        - region
+      properties:
+        aws_vm_instance_type_labelsize:
+          title: Taille de l'instance
+          type: string
+          description: Choisissez la taille de ressource souhaitée
+          enum: [small, medium, large, xlarge]
+          default: small
+        region:
+          title: Région AWS
+          type: string
+          enum: [eu-west-3, us-east-1, eu-central-1]
+          default: eu-west-3
+
+    - title: Étape 3 - Options et Tags
+      properties:
+        owner_email:
+          title: Email du responsable
+          type: string
+          format: email
+        backup_enabled:
+          title: Activer les sauvegardes ?
+          type: boolean
+          default: false
+
+  steps:
+    - id: trigger_ansible_job
+      name: Lancement du Job Ansible
+      action: ansible:controller:job:run
+      input:
+        jobTemplateName: "AWS - Provision EC2 Instance"
+        extraVars:
+          aws_vm_name: ${{ parameters.vm_name }}
+          # Utilisation de la nouvelle variable demandée
+          aws_vm_instance_type_labelsize: ${{ parameters.aws_vm_instance_type_labelsize }}
+          aws_region: ${{ parameters.region }}
+          env_tag: ${{ parameters.environment }}
+          owner: ${{ parameters.owner_email }}
