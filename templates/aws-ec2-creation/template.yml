@@ -1,63 +1,46 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: create-aws-vm-aap
-  title: Provisionner une VM AWS (Self-Service)
-  description: Questionnaire multi-étapes pour créer une instance EC2 via Ansible.
-  tags:
-    - aws
-    - ec2
-    - ansible
+  # Changement : nom simplifié sans caractères spéciaux
+  name: create-aws-vm-simple
+  title: Provisionner une VM AWS
+  description: Création de VM via AAP
 spec:
-  owner: platform-team
+  owner: ansible-authors
   type: service
+  # Ajout du système comme dans votre exemple
+  system: ansible
 
-  # L'utilisation d'une liste sous 'parameters' crée automatiquement les pages successives
   parameters:
-    - title: Étape 1 - Informations de base
+    - title: Étape 1 - Identification
       required:
         - vm_name
       properties:
         vm_name:
-          title: Nom de la machine
+          title: Nom de la VM
           type: string
-          description: Le nom qui sera taggé sur AWS.
         environment:
           title: Environnement
           type: string
-          enum: [dev, staging, prod]
-          default: dev
+          enum: [dev, prod]
 
-    - title: Étape 2 - Taille de l'instance
+    - title: Étape 2 - Taille
       required:
         - aws_vm_instance_type_labelsize
       properties:
         aws_vm_instance_type_labelsize:
           title: Taille de l'instance
           type: string
-          description: Choisissez la catégorie de performance.
           enum: [small, medium, large, xlarge]
           default: small
-        region:
-          title: Région AWS
-          type: string
-          enum: [eu-west-3, us-east-1]
-          default: eu-west-3
 
   steps:
-    - id: trigger_ansible
-      name: Déclenchement du Job sur Ansible Controller
+    - id: trigger
+      name: Lancement du Job
+      # Attention : vérifiez que cette action est bien installée dans votre AAP
       action: ansible:controller:job:run
       input:
-        # Remplacez par le nom exact de votre Job Template dans AAP
         jobTemplateName: "AWS - EC2 Provisioning"
         extraVars:
           aws_vm_name: ${{ parameters.vm_name }}
           aws_vm_instance_type_labelsize: ${{ parameters.aws_vm_instance_type_labelsize }}
-          env_tag: ${{ parameters.environment }}
-          aws_region: ${{ parameters.region }}
-
-  output:
-    text:
-      - title: "Succès"
-        content: "La demande de création de VM pour ${{ parameters.vm_name }} a été transmise à Ansible Automation Platform."
