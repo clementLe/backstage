@@ -1,0 +1,23 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: test-diagnostic
+  title: Test de diagnostic multi-étapes
+spec:
+  owner: guest
+  type: service
+  parameters:
+    - title: Étape 1
+      properties:
+        nom: { type: string }
+    - title: Étape 2
+      properties:
+        taille: { type: string, enum: [small, large] }
+
+  steps:
+    - id: log-debug
+      name: Affichage des logs
+      action: debug:log
+      input:
+        extraVars:
+          message: "La VM ${{ parameters.nom }} sera en taille ${{ parameters.taille }}"
