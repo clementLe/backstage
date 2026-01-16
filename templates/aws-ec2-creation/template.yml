@@ -1,67 +1,63 @@
-apiVersion: scaffold.backstage.io/v1beta3
+apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: create-aws-vm
-  title: Création de Machine Virtuelle AWS
-  description: Provisionner une instance EC2 via Ansible Automation Platform
+  name: create-aws-vm-aap
+  title: Provisionner une VM AWS (Self-Service)
+  description: Questionnaire multi-étapes pour créer une instance EC2 via Ansible.
+  tags:
+    - aws
+    - ec2
+    - ansible
 spec:
   owner: platform-team
   type: service
 
+  # L'utilisation d'une liste sous 'parameters' crée automatiquement les pages successives
   parameters:
-    - title: Étape 1 - Identification
+    - title: Étape 1 - Informations de base
       required:
         - vm_name
-        - environment
       properties:
         vm_name:
-          title: Nom de la VM
+          title: Nom de la machine
           type: string
-          description: Nom unique pour l'instance EC2
+          description: Le nom qui sera taggé sur AWS.
         environment:
           title: Environnement
           type: string
-          enum: [Développement, Staging, Production]
-          default: Développement
+          enum: [dev, staging, prod]
+          default: dev
 
-    - title: Étape 2 - Configuration Technique
+    - title: Étape 2 - Taille de l'instance
       required:
         - aws_vm_instance_type_labelsize
-        - region
       properties:
         aws_vm_instance_type_labelsize:
           title: Taille de l'instance
           type: string
-          description: Choisissez la taille de ressource souhaitée
+          description: Choisissez la catégorie de performance.
           enum: [small, medium, large, xlarge]
           default: small
         region:
           title: Région AWS
           type: string
-          enum: [eu-west-3, us-east-1, eu-central-1]
+          enum: [eu-west-3, us-east-1]
           default: eu-west-3
 
-    - title: Étape 3 - Options et Tags
-      properties:
-        owner_email:
-          title: Email du responsable
-          type: string
-          format: email
-        backup_enabled:
-          title: Activer les sauvegardes ?
-          type: boolean
-          default: false
-
   steps:
-    - id: trigger_ansible_job
-      name: Lancement du Job Ansible
+    - id: trigger_ansible
+      name: Déclenchement du Job sur Ansible Controller
       action: ansible:controller:job:run
       input:
-        jobTemplateName: "AWS - Provision EC2 Instance"
+        # Remplacez par le nom exact de votre Job Template dans AAP
+        jobTemplateName: "AWS - EC2 Provisioning"
         extraVars:
           aws_vm_name: ${{ parameters.vm_name }}
-          # Utilisation de la nouvelle variable demandée
           aws_vm_instance_type_labelsize: ${{ parameters.aws_vm_instance_type_labelsize }}
-          aws_region: ${{ parameters.region }}
           env_tag: ${{ parameters.environment }}
-          owner: ${{ parameters.owner_email }}
+          aws_region: ${{ parameters.region }}
+
+  output:
+    text:
+      - title: "Succès"
+        content: "La demande de création de VM pour ${{ parameters.vm_name }} a été transmise à Ansible Automation Platform."
