@@ -1,59 +1,63 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: create-aws-vm-final
-  title: Provisionnement VM AWS via RHAAP
-  description: Création d'une instance EC2 avec sélection de taille
+  name: create-aws-vm
+  title: Provisionnement Instance AWS EC2
+  description: Créer une nouvelle machine virtuelle sur AWS via Ansible Automation Platform
 spec:
   owner: platform-team
   type: service
 
   parameters:
-    - title: Étape 1 - Identification et Accès
+    - title: Informations de la VM
       required:
-        - vm_name
-        - AAP_TOKEN
+        - aws_vm_name
+        - aws_vm_instance_type_labelsize
       properties:
-        vm_name:
+        aws_vm_name:
           title: Nom de la VM
           type: string
-        # Le token doit souvent être présent AVANT le picker pour éviter l'erreur 'includes'
-        AAP_TOKEN:
-          title: Token API Ansible
-          type: string
-          ui:field: password
-
-    - title: Étape 2 - Configuration Technique
-      required:
-        - aws_vm_instance_type_labelsize
-        - jobInventory
-      properties:
+          description: Le nom de l'instance qui sera affiché dans la console AWS.
+          ui:autofocus: true
         aws_vm_instance_type_labelsize:
           title: Taille de l'instance
           type: string
-          enum: [small, medium, large, xlarge]
-          default: small
-        jobInventory:
-          title: Inventaire
+          description: Sélectionnez la catégorie de performance de la VM.
+          enum:
+            - small
+            - medium
+            - large
+            - xlarge
+          enumNames:
+            - "Small (t3.small)"
+            - "Medium (t3.medium)"
+            - "Large (t3.large)"
+            - "X-Large (t3.xlarge)"
+
+    - title: Configuration AAP (Masqué)
+      properties:
+        # On peut fixer ces valeurs si le Job Template existe déjà
+        jobTemplateName:
           type: string
-          description: Sélectionnez l'inventaire cible
-          ui:field: AAPResourcePicker
-          ui:options:
-            resource: inventories
-            # Ajouter un filtre vide ou spécifique aide souvent à résoudre l'erreur 'includes'
-            config:
-              filter: {}
+          default: "AWS"
+          ui:field: hidden
 
   steps:
-    - id: launch-job
-      name: Lancement du Job Ansible
+    - id: launch-aws-job
+      name: Lancement du déploiement AWS
       action: rhaap:launch-job-template
       input:
+        # Le token peut être récupéré via une intégration ou une variable d'environnement
         token: ${{ parameters.AAP_TOKEN }}
         values:
-          template: "AWS - EC2 Provisioning"
-          inventory: ${{ parameters.jobInventory }}
-          jobType: run
+          template: ${{ parameters.jobTemplateName }}
+          # On passe les variables saisies dans le formulaire via extraVariables
           extraVariables:
-            aws_vm_name: ${{ parameters.vm_name }}
+            aws_vm_name: ${{ parameters.aws_vm_name }}
             aws_vm_instance_type_labelsize: ${{ parameters.aws_vm_instance_type_labelsize }}
+            request_source: "backstage"
+
+  output:
+    links:
+      - title: Suivre l'exécution sur AAP
+        url: ${{ steps['launch-aws-job'].output.data.url }}
