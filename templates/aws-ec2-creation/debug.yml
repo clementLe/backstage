@@ -19,5 +19,5 @@ spec:
       name: Affichage des logs
       action: debug:log
       input:
-        extraVars:
-          message: "La VM ${{ parameters.nom }} sera en taille ${{ parameters.taille }}"
+        # debug:log n'accepte que 'message'
+        message: "VM: ${{ parameters.vm_name }} | Taille: ${{ parameters.aws_vm_instance_type_labelsize }}"
