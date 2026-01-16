@@ -1,23 +1,33 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: test-diagnostic
-  title: Test de diagnostic multi-étapes
+  name: test-variables-aws
+  title: Test Validation Variables AWS
+  description: Ce template sert à vérifier que le questionnaire fonctionne.
 spec:
-  owner: guest
+  owner: platform-team
   type: service
+
   parameters:
-    - title: Étape 1
+    - title: Étape 1 - Nom
+      required: [vm_name]
       properties:
-        nom: { type: string }
-    - title: Étape 2
+        vm_name:
+          title: Nom de la VM
+          type: string
+
+    - title: Étape 2 - Taille
+      required: [aws_vm_instance_type_labelsize]
       properties:
-        taille: { type: string, enum: [small, large] }
+        aws_vm_instance_type_labelsize:
+          title: Taille choisie
+          type: string
+          enum: [small, medium, large, xlarge]
 
   steps:
-    - id: log-debug
-      name: Affichage des logs
+    - id: log-check
+      name: Affichage des valeurs saisies
       action: debug:log
       input:
-        # debug:log n'accepte que 'message'
-        message: "VM: ${{ parameters.vm_name }} | Taille: ${{ parameters.aws_vm_instance_type_labelsize }}"
+        # On utilise uniquement 'message' pour l'action debug:log
+        message: "Validation - Nom: ${{ parameters.vm_name }} | Taille: ${{ parameters.aws_vm_instance_type_labelsize }}"
