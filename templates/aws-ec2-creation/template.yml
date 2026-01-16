@@ -3,25 +3,25 @@ kind: Template
 metadata:
   name: create-aws-vm-final
   title: Provisionnement VM AWS via RHAAP
-  description: Création d'une instance EC2 avec sélection de taille (Small à XLarge)
+  description: Création d'une instance EC2 avec sélection de taille
 spec:
   owner: platform-team
   type: service
 
   parameters:
-    - title: Étape 1 - Identification
+    - title: Étape 1 - Identification et Accès
       required:
         - vm_name
+        - AAP_TOKEN
       properties:
         vm_name:
           title: Nom de la VM
           type: string
-          description: Nom de l'instance sur AWS
-        environment:
-          title: Environnement
+        # Le token doit souvent être présent AVANT le picker pour éviter l'erreur 'includes'
+        AAP_TOKEN:
+          title: Token API Ansible
           type: string
-          enum: [dev, staging, prod]
-          default: dev
+          ui:field: password
 
     - title: Étape 2 - Configuration Technique
       required:
@@ -36,30 +36,24 @@ spec:
         jobInventory:
           title: Inventaire
           type: string
-          description: Sélectionnez l'inventaire cible dans AAP
+          description: Sélectionnez l'inventaire cible
           ui:field: AAPResourcePicker
           ui:options:
             resource: inventories
+            # Ajouter un filtre vide ou spécifique aide souvent à résoudre l'erreur 'includes'
+            config:
+              filter: {}
 
   steps:
     - id: launch-job
       name: Lancement du Job Ansible
-      # CHANGEMENT ICI : On utilise l'action de VOTRE documentation
       action: rhaap:launch-job-template
       input:
-        # Assurez-vous que ce paramètre AAP_TOKEN est bien géré (via secret ou paramètre)
-        token: ${{ parameters.AAP_TOKEN }} 
+        token: ${{ parameters.AAP_TOKEN }}
         values:
-          # Nom exact de votre Job Template dans le Controller AAP
           template: "AWS - EC2 Provisioning"
           inventory: ${{ parameters.jobInventory }}
           jobType: run
           extraVariables:
             aws_vm_name: ${{ parameters.vm_name }}
             aws_vm_instance_type_labelsize: ${{ parameters.aws_vm_instance_type_labelsize }}
-            env_tag: ${{ parameters.environment }}
-
-  output:
-    links:
-      - title: Suivre l'exécution du Job dans AAP
-        url: ${{ steps['launch-job'].output.data.url }}
