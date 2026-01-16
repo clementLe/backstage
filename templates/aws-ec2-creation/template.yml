@@ -1,8 +1,8 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: create-aws-vm-rhaap
-  title: Provisionnement VM AWS (RHAAP)
+  name: create-aws-vm-final
+  title: Provisionnement VM AWS via RHAAP
   description: Création d'une instance EC2 avec sélection de taille (Small à XLarge)
 spec:
   owner: platform-team
@@ -23,7 +23,7 @@ spec:
           enum: [dev, staging, prod]
           default: dev
 
-    - title: Étape 2 - Configuration AAP
+    - title: Étape 2 - Configuration Technique
       required:
         - aws_vm_instance_type_labelsize
         - jobInventory
@@ -36,7 +36,7 @@ spec:
         jobInventory:
           title: Inventaire
           type: string
-          description: Sélectionnez l'inventaire dans AAP
+          description: Sélectionnez l'inventaire cible dans AAP
           ui:field: AAPResourcePicker
           ui:options:
             resource: inventories
@@ -44,13 +44,14 @@ spec:
   steps:
     - id: launch-job
       name: Lancement du Job Ansible
+      # CHANGEMENT ICI : On utilise l'action de VOTRE documentation
       action: rhaap:launch-job-template
       input:
-        # Note: Vérifiez si votre token est dans parameters ou secrets
+        # Assurez-vous que ce paramètre AAP_TOKEN est bien géré (via secret ou paramètre)
         token: ${{ parameters.AAP_TOKEN }} 
         values:
-          # Remplacez par le nom exact de votre Job Template dans le Controller
-          template: "AWS"
+          # Nom exact de votre Job Template dans le Controller AAP
+          template: "AWS - EC2 Provisioning"
           inventory: ${{ parameters.jobInventory }}
           jobType: run
           extraVariables:
@@ -60,5 +61,5 @@ spec:
 
   output:
     links:
-      - title: Suivre l'exécution du Job
+      - title: Suivre l'exécution du Job dans AAP
         url: ${{ steps['launch-job'].output.data.url }}
